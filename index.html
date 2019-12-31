@@ -5,60 +5,61 @@
 		<meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'>
 		<style>
 
-html,body{
+html , body {
 
 	margin: 0;
+
+}
+
+body {
+
+	width: 100%;
+	height: 100%;
+
 	color: #fff;
 	font-family: monospace,monospace;
+
+	background-color: #222;
 
 }
 
 nav {
 
+	--size:90vmin;
 	position: fixed;
-	width: 100%;
-	height: 100%;
-	z-index: 100;
-
-	background-color: #222;
-	background-image: radial-gradient(#333,#111 50%,#222 50%);
-	background-size: 100vmin;
-	background-position: center;
-	background-repeat: no-repeat;
+	left:calc(50vw - var(--size)/2);
+	top:calc(50vh - var(--size)/2);
+	width:var(--size);
+	height:var(--size);
+	background-image:radial-gradient(#333,#111);
+	border-radius:50%;
 
 	text-align: center;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 
+	animation:rotate 60s linear infinite;
+
 }
 
-nav>*{
-	margin:1rem 0;
+@keyframes rotate{
+	0%{transform:rotate(-0.1turn)}
+	100%{transform:rotate(0.9turn)}
 }
 
-button{
-	background: NONE;
-	border: 0;
-	color: inherit;
-	font-family: inherit;
-	cursor: pointer;
-}
-button:hover{
-	opacity:0.5;
-}
-
-#CANVAS{
+#canvas{
 	position:fixed;
+	visibility:hidden;
 }
 		</style>
 	</head>
 	<body>
 
 		<nav id='menu'>
-			<div>Ball Game</div>
-			<button id='menu-play'>I would like to throw balls at balls</button>
-			<button id='menu-buy'>Store</button>
+			<h1>Ball Game</h1>
+			<p>A Game Where You Throw Small Balls at your Big Ball to Get Your Big Ball to the Other Side</p>
+			<p>By DevCord & Three.js Example Making People</p>
 		</nav>
 
 		<main id='canvas'></main>
@@ -74,20 +75,23 @@ import { BufferGeometryUtils } from './js/BufferGeometryUtils.js'
 
 // menu screen
 
-const MENU = document.getElementById('menu'),
-			MENU_PLAY = document.getElementById('menu-play'),
-			MENU_BUY = document.getElementById('menu-buy'),
+const DOC 			= document,
 
-			CANVAS = document.getElementById('canvas')
+			MENU_PLAY = DOC.getElementById('menu-play'),
+			MENU_BUY 	= DOC.getElementById('menu-buy'),
+
+			CANVAS 		= DOC.getElementById('canvas'),
+
+			SCENE 		= new THREE.Scene()
 
 
 
 // Graphics variables
-let camera, controls, scene, renderer
+let camera, controls, renderer
 let textureLoader
 let clock = new THREE.Clock()
 let clickRequest = false
-let mouseCoords = new THREE.Vector2()
+const CANVAS_CENTER = new THREE.Vector2(0,0)
 let raycaster = new THREE.Raycaster()
 let ballMaterial = new THREE.MeshPhongMaterial( { color: 0x202020 } )
 let pos = new THREE.Vector3()
@@ -101,31 +105,37 @@ let margin = 0.05
 let transformAux1
 let softBodyHelpers
 
+let ambientLight
+
+const setSkyColor = ( colorStr ) => {
+
+	const color = new THREE.Color( colorStr )
+
+	SCENE.background = color
+
+}
+
+initGraphics()
+
 Ammo().then( ( AmmoLib ) => {
 
 	Ammo = AmmoLib
 
-	initGraphics()
 	initPhysics()
 	createObjects()
+	initInput()
+	animate()
 
-	MENU_PLAY.addEventListener('click',()=>{
-
-		MENU.style.visibility = 'hidden'
-
-		initInput()
-		animate()
-
-	})
+	setTimeout(()=>{CANVAS.style.visibility = 'visible'},1000);
 
 } )
 
+
 function initGraphics() {
 
+	setSkyColor('hsl(200,100%,80%)')
 	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 )
-	scene = new THREE.Scene()
-	scene.background = new THREE.Color( 0xbfd1e5 )
-	camera.position.set( - 7, 5, 8 )
+	camera.position.set( -10, 5, 0 )
 	renderer = new THREE.WebGLRenderer()
 	renderer.setPixelRatio( window.devicePixelRatio )
 	renderer.setSize( window.innerWidth, window.innerHeight )
@@ -135,12 +145,12 @@ function initGraphics() {
 	controls.target.set( 0, 2, 0 )
 	controls.update()
 	textureLoader = new THREE.TextureLoader()
-	let ambientLight = new THREE.AmbientLight( 0x404040 )
-	scene.add( ambientLight )
+	let ambientLight = new THREE.AmbientLight('hsl(200,10%,40%)')
+	SCENE.add( ambientLight )
 	let light = new THREE.DirectionalLight( 0xffffff, 1 )
 	light.position.set( - 10, 10, 5 )
 	light.castShadow = true
-	let d = 20
+	let d = 10
 	light.shadow.camera.left = - d
 	light.shadow.camera.right = d
 	light.shadow.camera.top = d
@@ -149,7 +159,7 @@ function initGraphics() {
 	light.shadow.camera.far = 50
 	light.shadow.mapSize.x = 1024
 	light.shadow.mapSize.y = 1024
-	scene.add( light )
+	SCENE.add( light )
 	window.addEventListener( 'resize', onWindowResize, false )
 
 }
@@ -170,15 +180,16 @@ function initPhysics() {
 }
 function createObjects() {
 	// Ground
-	pos.set( 0, - 0.5, 0 )
+	pos.set( 400, - 0.5, 0 )
 	quat.set( 0, 0, 0, 1 )
-	let ground = createParalellepiped( 40, 1, 40, 0, pos, quat, new THREE.MeshPhongMaterial( { color: 0xFFFFFF } ) )
+	let ground = createParalellepiped( 1024, 1, 64, 0, pos, quat, new THREE.MeshPhongMaterial( { color: 0xFFFFFF } ) )
 	ground.castShadow = true
 	ground.receiveShadow = true
-	textureLoader.load( 'textures/ground/sand.png', function ( texture ) {
+	textureLoader.load( 'textures/ground/sand.png', ( texture ) => {
+
 		texture.wrapS = THREE.RepeatWrapping
 		texture.wrapT = THREE.RepeatWrapping
-		texture.repeat.set( 40, 40 )
+		texture.repeat.set( 32, 2 )
 		ground.material.map = texture
 		ground.material.needsUpdate = true
 
@@ -188,15 +199,6 @@ function createObjects() {
 	let sphereGeometry = new THREE.SphereBufferGeometry( 1.5, 40, 25 )
 	sphereGeometry.translate( 5, 5, 0 )
 	createSoftVolume( sphereGeometry, volumeMass, 250 )
-	let boxGeometry = new THREE.BoxBufferGeometry( 1, 1, 5, 4, 4, 20 )
-	boxGeometry.translate( - 2, 5, 0 )
-	createSoftVolume( boxGeometry, volumeMass, 120 )
-	// Ramp
-	pos.set( 3, 1, 0 )
-	quat.setFromAxisAngle( new THREE.Vector3( 0, 0, 1 ), 30 * Math.PI / 180 )
-	let obstacle = createParalellepiped( 10, 1, 4, 0, pos, quat, new THREE.MeshPhongMaterial( { color: 0x606060 } ) )
-	obstacle.castShadow = true
-	obstacle.receiveShadow = true
 }
 function processGeometry( bufGeometry ) {
 	// Ony consider the position values when merging the vertices
@@ -211,8 +213,8 @@ function processGeometry( bufGeometry ) {
 function isEqual( x1, y1, z1, x2, y2, z2 ) {
 	let delta = 0.000001
 	return Math.abs( x2 - x1 ) < delta &&
-			Math.abs( y2 - y1 ) < delta &&
-			Math.abs( z2 - z1 ) < delta
+				 Math.abs( y2 - y1 ) < delta &&
+				 Math.abs( z2 - z1 ) < delta
 }
 function mapIndices( bufGeometry, indexedBufferGeom ) {
 	// Creates ammoVertices, ammoIndices and ammoIndexAssociation in bufGeometry
@@ -243,7 +245,7 @@ function createSoftVolume( bufferGeom, mass, pressure ) {
 	volume.castShadow = true
 	volume.receiveShadow = true
 	volume.frustumCulled = false
-	scene.add( volume )
+	SCENE.add( volume )
 	textureLoader.load( 'textures/inflatables/colors.png', function ( texture ) {
 		volume.material.map = texture
 		volume.material.needsUpdate = true
@@ -297,7 +299,7 @@ function createRigidBody( threeObject, physicsShape, mass, pos, quat ) {
 	let rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, physicsShape, localInertia )
 	let body = new Ammo.btRigidBody( rbInfo )
 	threeObject.userData.physicsBody = body
-	scene.add( threeObject )
+	SCENE.add( threeObject )
 	if ( mass > 0 ) {
 		rigidBodies.push( threeObject )
 		// Disable deactivation
@@ -307,19 +309,13 @@ function createRigidBody( threeObject, physicsShape, mass, pos, quat ) {
 	return body
 }
 function initInput() {
-	window.addEventListener( 'mousedown', function ( event ) {
-		if ( ! clickRequest ) {
-			mouseCoords.set(
-				( event.clientX / window.innerWidth ) * 2 - 1,
-				- ( event.clientY / window.innerHeight ) * 2 + 1
-			)
-			clickRequest = true
-		}
+	CANVAS.addEventListener( 'click', () => {
+		clickRequest = true
 	}, false )
 }
 function processClick() {
 	if ( clickRequest ) {
-		raycaster.setFromCamera( mouseCoords, camera )
+		raycaster.setFromCamera( CANVAS_CENTER, camera )
 		// Creates a ball
 		let ballMass = 3
 		let ballRadius = 0.4
@@ -352,7 +348,7 @@ function render() {
 	let deltaTime = clock.getDelta()
 	updatePhysics( deltaTime )
 	processClick()
-	renderer.render( scene, camera )
+	renderer.render( SCENE, camera )
 }
 function updatePhysics( deltaTime ) {
 	// Step world
