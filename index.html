@@ -12,11 +12,13 @@ html,body{
 	font-family: monospace,monospace;
 
 }
-#menu {
+
+nav {
 
 	position: fixed;
 	width: 100%;
 	height: 100%;
+	z-index: 100;
 
 	background-color: #222;
 	background-image: radial-gradient(#333,#111 50%,#222 50%);
@@ -52,6 +54,7 @@ button:hover{
 		</style>
 	</head>
 	<body>
+
 		<nav id='menu'>
 			<div>Ball Game</div>
 			<button id='menu-play'>I would like to throw balls at balls</button>
