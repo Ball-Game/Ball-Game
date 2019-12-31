@@ -11,58 +11,89 @@ html , body {
 
 }
 
+@font-face {
+	font-family:'emberly';
+	src: url('fonts/emberly.otf') format('opentype');
+}
+
 body {
 
 	width: 100%;
 	height: 100%;
 
 	color: #fff;
-	font-family: monospace,monospace;
+	font-family: 'emberly';
 
 	background-color: #222;
 
 }
 
-nav {
+.start-cards,#canvas{
+	position:fixed;
+}
+
+.start-cards {
 
 	--size:90vmin;
-	position: fixed;
 	left:calc(50vw - var(--size)/2);
 	top:calc(50vh - var(--size)/2);
-	width:var(--size);
-	height:var(--size);
-	background-image:radial-gradient(#333,#111);
-	border-radius:50%;
 
 	text-align: center;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
-
-	animation:rotate 60s linear infinite;
+	align-items: center;
 
 }
 
+.start-cards,button{
+
+	width:var(--size);
+	height:var(--size);
+	background-image:radial-gradient(#333,#111);
+	border-radius:50%;
+
+}
+
+button{
+
+	--size:30vmin;
+	display:inline-block;
+
+	font-family:inherit;
+	font-size:3rem;
+	color:inherit;
+	border:0;
+
+}
+
+#loading{
+	animation:rotate 16s linear infinite;
+}
 @keyframes rotate{
 	0%{transform:rotate(-0.1turn)}
 	100%{transform:rotate(0.9turn)}
 }
 
 #canvas{
-	position:fixed;
 	visibility:hidden;
 }
 		</style>
 	</head>
 	<body>
 
-		<nav id='menu'>
+		<main id='canvas'></main>
+
+		<div class='start-cards' id='loading'>
+			<h1>Ball Game</h1>
+		</div>
+
+		<div class='start-cards' id='info'>
 			<h1>Ball Game</h1>
 			<p>A Game Where You Throw Small Balls at your Big Ball to Get Your Big Ball to the Other Side</p>
+			<button>Start</button>
 			<p>By DevCord & Three.js Example Making People</p>
-		</nav>
-
-		<main id='canvas'></main>
+		</div>
 
 		<script src='js/ammo.js'></script>
 
@@ -126,7 +157,7 @@ Ammo().then( ( AmmoLib ) => {
 	initInput()
 	animate()
 
-	setTimeout(()=>{CANVAS.style.visibility = 'visible'},1000);
+	setTimeout(()=>{CANVAS.style.visibility = 'visible'},256);
 
 } )
 
