@@ -1,9 +1,9 @@
-<html lang="en">
+<html lang='en'>
 	<head>
 		<title>Ammo.js softbody volume demo</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<link type="text/css" rel="stylesheet" href="css/main.css">
+		<meta charset='utf-8'>
+		<meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'>
+		<link type='text/css' rel='stylesheet' href='css/main.css'>
 		<style>
 			body {
 				color: #333;
@@ -11,19 +11,19 @@
 		</style>
 	</head>
 	<body>
-		<div id="info">
+		<div id='info'>
 			Ammo.js physics soft body volume demo<br/>
 			Click to throw a ball
 		</div>
-		<div id="container"></div>
+		<div id='container'></div>
 
-		<script src="js/ammo.js"></script>
+		<script src='js/ammo.js'></script>
 
-		<script type="module">
-			import * as THREE from 'js/three.module.js';
-			import Stats from 'js/stats.module.js';
-			import { OrbitControls } from 'js/OrbitControls.js';
-			import { BufferGeometryUtils } from 'js/BufferGeometryUtils.js';
+		<script type='module'>
+			import * as THREE from './js/three.module.js';
+			import Stats from './js/stats.module.js';
+			import { OrbitControls } from './js/OrbitControls.js';
+			import { BufferGeometryUtils } from './js/BufferGeometryUtils.js';
 			// Graphics variables
 			var container, stats;
 			var camera, controls, scene, renderer;
@@ -110,7 +110,7 @@
 				var ground = createParalellepiped( 40, 1, 40, 0, pos, quat, new THREE.MeshPhongMaterial( { color: 0xFFFFFF } ) );
 				ground.castShadow = true;
 				ground.receiveShadow = true;
-				textureLoader.load( "textures/grid.png", function ( texture ) {
+				textureLoader.load( 'textures/grid.png', function ( texture ) {
 					texture.wrapS = THREE.RepeatWrapping;
 					texture.wrapT = THREE.RepeatWrapping;
 					texture.repeat.set( 40, 40 );
@@ -178,7 +178,7 @@
 				volume.receiveShadow = true;
 				volume.frustumCulled = false;
 				scene.add( volume );
-				textureLoader.load( "textures/colors.png", function ( texture ) {
+				textureLoader.load( 'textures/colors.png', function ( texture ) {
 					volume.material.map = texture;
 					volume.material.needsUpdate = true;
 				} );
