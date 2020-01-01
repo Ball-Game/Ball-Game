@@ -1,4 +1,4 @@
-<html lang='en'>
+start<html lang='en'>
 	<head>
 		<title>Ball Game</title>
 		<meta charset='utf-8'>
@@ -25,6 +25,10 @@ body {
 
 }
 
+#canvas{
+	top:0
+}
+
 #loading{
 	width: 100%;
 	height: 100%;
@@ -34,7 +38,7 @@ body {
 
 }
 
-#start,#start-button,#loading,#loading-circle,#canvas{
+#start,#start-button,#canvas{
 	position:fixed;
 }
 
@@ -44,7 +48,7 @@ body {
 
 }
 
-#start,#start-button,#loading-circle{
+#start,#start-button{
 
 	width:var(--size);
 	height:var(--size);
@@ -70,7 +74,7 @@ body {
   user-select:none;
 }
 
-#start-button,#loading-circle{
+#start-button{
 	--size:calc(19.5vmin + 6.5rem);
 }
 
@@ -97,15 +101,9 @@ body {
 	background-image:radial-gradient(#111,#222);
 }
 
-#loading-circle{
+#start-button:disabled{
 
-	font-size:calc(2.4vmin + 0.8rem);
-
-	text-align: center;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
-
+	font-size:calc(6vmin + 2rem);
 	animation:rotate 16s linear infinite;
 }
 @keyframes rotate{
@@ -118,12 +116,6 @@ body {
 	<body>
 
 		<main id='canvas'></main>
-
-		<div id='loading'>
-			<div id='loading-circle'>
-				<h1>Loading...</h1>
-			</div>
-		</div>
 
 		<div id='start'>
       <svg viewbox='0 0 90 90'>
@@ -175,26 +167,9 @@ By DevCord &amp; Three.js Example Making People                    </textPath>
             </text>
             -->
       </svg>
-			<button id='start-button'>Start</button>
+			<button id='start-button' disabled>Loading...</button>
 		</div>
 
-
-		<script>
-
-const DOC 			   = document,
-
-			START        = DOC.getElementById('start'),
-			START_BUTTON = DOC.getElementById('start-button'),
-			LOADING 	   = DOC.getElementById('loading'),
-
-			CANVAS 		   = DOC.getElementById('canvas')
-
-START_BUTTON.addEventListener('click',()=>{
-  START.style.visibility='hidden'
-	CANVAS.requestPointerLock();
-})
-
-		</script>
 
 		<script src='js/ammo.js'></script>
 
@@ -206,24 +181,30 @@ import { PointerLockControls } from './js/PointerLockControls.js'
 import { BufferGeometryUtils } from './js/BufferGeometryUtils.js'
 
 // menu screen
+const doc 			   = document,
 
-const	SCENE 		  = new THREE.Scene(),
-			CAMERA 			= new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 ),
-			CONTROLS		= new THREE.PointerLockControls( CONTROLS, renderer.domElement )
+			start        = doc.getElementById('start'),
+			startButton  = doc.getElementById('start-button'),
+			loading 	   = doc.getElementById('loading'),
 
+			canvas 		   = doc.getElementById('canvas'),
+
+			scene 		  = new THREE.Scene(),
+			renderer 		= new THREE.WebGLRenderer(),
+			camera 			= new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 ),
+			controls		= new PointerLockControls( camera, renderer.domElement )
 
 // Graphics variables
-let renderer
 let textureLoader
 let clock = new THREE.Clock()
 let clickRequest = false
-const CANVAS_CENTER = new THREE.Vector2(0,0)
+const canvasCenter = new THREE.Vector2(0,0)
 let raycaster = new THREE.Raycaster()
 let ballMaterial = new THREE.MeshPhongMaterial( { color: 0x202020 } )
 let pos = new THREE.Vector3()
 let quat = new THREE.Quaternion()
 // Physics variables
-const GRAVITY = - 9.8
+const gravity = - 9.8
 let physicsWorld
 let rigidBodies = []
 let softBodies = []
@@ -237,11 +218,16 @@ const setSkyColor = ( colorStr ) => {
 
 	const color = new THREE.Color( colorStr )
 
-	SCENE.background = color
+	scene.background = color
 
 }
 
 initGraphics()
+
+startButton.addEventListener('click',()=>{
+  start.style.visibility='hidden'
+	controls.lock()
+})
 
 Ammo().then( ( AmmoLib ) => {
 
@@ -252,8 +238,8 @@ Ammo().then( ( AmmoLib ) => {
 	initInput()
 	animate()
 
-	LOADING.style.visibility = 'hidden'
-	CONTROLS.lock()
+	startButton.innerText = 'Start';
+	startButton.disabled  = false;
 
 } )
 
@@ -261,15 +247,15 @@ Ammo().then( ( AmmoLib ) => {
 function initGraphics() {
 
 	setSkyColor('hsl(200,100%,80%)')
-	CONTROLS.position.set( -10, 5, 0 )
-	renderer = new THREE.WebGLRenderer()
+	camera.position.set( -10, 5, 0 )
+
 	renderer.setPixelRatio( window.devicePixelRatio )
 	renderer.setSize( window.innerWidth, window.innerHeight )
 	renderer.shadowMap.enabled = true
-	CANVAS.appendChild( renderer.domElement )
+	canvas.appendChild( renderer.domElement )
 	textureLoader = new THREE.TextureLoader()
 	let ambientLight = new THREE.AmbientLight('hsl(200,10%,40%)')
-	SCENE.add( ambientLight )
+	scene.add( ambientLight )
 	let light = new THREE.DirectionalLight( 0xffffff, 1 )
 	light.position.set( - 10, 10, 5 )
 	light.castShadow = true
@@ -282,7 +268,7 @@ function initGraphics() {
 	light.shadow.camera.far = 50
 	light.shadow.mapSize.x = 1024
 	light.shadow.mapSize.y = 1024
-	SCENE.add( light )
+	scene.add( light )
 	window.addEventListener( 'resize', onWindowResize, false )
 
 }
@@ -295,8 +281,8 @@ function initPhysics() {
 	let solver = new Ammo.btSequentialImpulseConstraintSolver()
 	let softBodySolver = new Ammo.btDefaultSoftBodySolver()
 	physicsWorld = new Ammo.btSoftRigidDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration, softBodySolver )
-	physicsWorld.setGravity( new Ammo.btVector3( 0, GRAVITY, 0 ) )
-	physicsWorld.getWorldInfo().set_m_gravity( new Ammo.btVector3( 0, GRAVITY, 0 ) )
+	physicsWorld.setGravity( new Ammo.btVector3( 0, gravity, 0 ) )
+	physicsWorld.getWorldInfo().set_m_gravity( new Ammo.btVector3( 0, gravity, 0 ) )
 	transformAux1 = new Ammo.btTransform()
 	softBodyHelpers = new Ammo.btSoftBodyHelpers()
 
@@ -368,7 +354,7 @@ function createSoftVolume( bufferGeom, mass, pressure ) {
 	volume.castShadow = true
 	volume.receiveShadow = true
 	volume.frustumCulled = false
-	SCENE.add( volume )
+	scene.add( volume )
 	textureLoader.load( 'textures/inflatables/colors.png', function ( texture ) {
 		volume.material.map = texture
 		volume.material.needsUpdate = true
@@ -422,7 +408,7 @@ function createRigidBody( threeObject, physicsShape, mass, pos, quat ) {
 	let rbInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, physicsShape, localInertia )
 	let body = new Ammo.btRigidBody( rbInfo )
 	threeObject.userData.physicsBody = body
-	SCENE.add( threeObject )
+	scene.add( threeObject )
 	if ( mass > 0 ) {
 		rigidBodies.push( threeObject )
 		// Disable deactivation
@@ -432,13 +418,13 @@ function createRigidBody( threeObject, physicsShape, mass, pos, quat ) {
 	return body
 }
 function initInput() {
-	CANVAS.addEventListener( 'click', () => {
+	canvas.addEventListener( 'click', () => {
 		clickRequest = true
 	}, false )
 }
 function processClick() {
 	if ( clickRequest ) {
-		raycaster.setFromCamera( CANVAS_CENTER, CONTROLS )
+		raycaster.setFromCamera( canvasCenter, camera )
 		// Creates a ball
 		let ballMass = 3
 		let ballRadius = 0.4
@@ -459,8 +445,8 @@ function processClick() {
 	}
 }
 function onWindowResize() {
-	CONTROLS.aspect = window.innerWidth / window.innerHeight
-	CONTROLS.updateProjectionMatrix()
+	camera.aspect = window.innerWidth / window.innerHeight
+	controls.updateProjectionMatrix()
 	renderer.setSize( window.innerWidth, window.innerHeight )
 }
 function animate() {
@@ -471,7 +457,7 @@ function render() {
 	let deltaTime = clock.getDelta()
 	updatePhysics( deltaTime )
 	processClick()
-	renderer.render( SCENE, CONTROLS )
+	renderer.render( scene, camera )
 }
 function updatePhysics( deltaTime ) {
 	// Step world
