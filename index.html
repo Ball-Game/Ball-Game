@@ -194,7 +194,7 @@ const doc 			  = document,
 			velocity 		= new THREE.Vector3(),
 			direction 	= new THREE.Vector3(),
 			vertex 			= new THREE.Vector3(),
-			speedFactor = 4,
+			speedFactor = 16,
 
 			scene 		  = new THREE.Scene(),
 			renderer 		= new THREE.WebGLRenderer(),
@@ -484,7 +484,7 @@ function initInput() {
 			moveRight = false
 			break
 			case 'Space':
-			velocity.y += 4 * speedFactor
+			velocity.y += speedFactor
 			break
 
 		}
