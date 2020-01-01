@@ -29,17 +29,32 @@ body {
 	top:0
 }
 
+#canvas::after{
+	content:'';
+	--size:1.6vmin;
+	display:block;
+	background:#ccc;
+	border:solid .4vmin #fff;
+	border-radius:50%;
+	mix-blend-mode:exclusion;
+}
+
 #loading{
 	width: 100%;
 	height: 100%;
 	top:0;
 	left:0;
 	background-color: #222;
-
 }
 
-#start,#start-button,#canvas{
+#start,#start-button,#canvas,#canvas::after{
 	position:fixed;
+}
+#start,#start-button,#canvas::after{
+	width:var(--size);
+	height:var(--size);
+	left:calc(50vw - var(--size)/2);
+	top:calc(50vh - var(--size)/2);
 }
 
 #start{
@@ -50,10 +65,6 @@ body {
 
 #start,#start-button{
 
-	width:var(--size);
-	height:var(--size);
-	left:calc(50vw - var(--size)/2);
-	top:calc(50vh - var(--size)/2);
 	background-image:radial-gradient(#333,#111);
 	border-radius:50%;
 
@@ -201,6 +212,13 @@ const doc 			  = document,
 			renderer 		= new THREE.WebGLRenderer(),
 			camera 			= new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 ),
 			controls		= new PointerLockControls( camera, renderer.domElement ),
+			texture 		= new THREE.TextureLoader(),
+			bgColor			= 'hsl(200,100%,80%)',
+			skyColor		= 'hsl(200,10%,40%)',
+			groundColor = 'hsl(40,50%,90%)',
+			ambLight 		= new THREE.AmbientLight		( skyColor , 0.4 ),
+			hemLight		= new THREE.HemisphereLight	( skyColor , groundColor , 0.4 ),
+			dirLight 		= new THREE.DirectionalLight( 0xffffff , 1 ),
 
 			gravity 		= - 9.8,
 			margin		 	= 0.05,
@@ -212,28 +230,20 @@ const doc 			  = document,
 let moveFwd 		= false,
 		moveBack   	= false,
 		moveLeft 		= false,
-		moveRight 	= false
+		moveRight 	= false,
+
+		viewer				= controls.getObject(),
+		clickRequest 	= false,
+		ballMaterial 	= new THREE.MeshPhongMaterial( { color: 0x202020 } )
+
 
 // Graphics variables
-let textureLoader
-let clickRequest = false
-let ballMaterial = new THREE.MeshPhongMaterial( { color: 0x202020 } )
 // Physics variables
 let physicsWorld
 let rigidBodies = []
 let softBodies = []
 let transformAux1
 let softBodyHelpers
-
-let ambientLight
-
-const setSkyColor = ( colorStr ) => {
-
-	const color = new THREE.Color( colorStr )
-
-	scene.background = color
-
-}
 
 initGraphics()
 
@@ -262,30 +272,29 @@ Ammo().then( ( AmmoLib ) => {
 
 function initGraphics() {
 
-	setSkyColor('hsl(200,100%,80%)')
 	camera.position.set( -10, 5, 0 )
 	camera.lookAt(center3)
+
+	scene.background = new THREE.Color(bgColor)
 
 	renderer.setPixelRatio( window.devicePixelRatio )
 	renderer.setSize( window.innerWidth, window.innerHeight )
 	renderer.shadowMap.enabled = true
 	canvas.appendChild( renderer.domElement )
-	textureLoader = new THREE.TextureLoader()
-	let ambientLight = new THREE.AmbientLight('hsl(200,10%,40%)')
-	scene.add( ambientLight )
-	let light = new THREE.DirectionalLight( 0xffffff, 1 )
-	light.position.set( - 10, 10, 5 )
-	light.castShadow = true
-	let d = 10
-	light.shadow.camera.left = - d
-	light.shadow.camera.right = d
-	light.shadow.camera.top = d
-	light.shadow.camera.bottom = - d
-	light.shadow.camera.near = 2
-	light.shadow.camera.far = 1024
-	light.shadow.mapSize.x = 64
-	light.shadow.mapSize.y = 1024
-	scene.add( light )
+	dirLight.position.set( - 10, 10, 0 )
+	dirLight.castShadow = true
+	let d = 2**3
+	dirLight.shadow.camera.left = - d
+	dirLight.shadow.camera.right = d
+	dirLight.shadow.camera.top = d
+	dirLight.shadow.camera.bottom = - d
+	dirLight.shadow.camera.near = 2
+	dirLight.shadow.camera.far = 2**9
+	dirLight.shadow.mapSize.x = 2**9
+	dirLight.shadow.mapSize.y = 2**9
+	scene.add( dirLight )
+	scene.add( hemLight )
+	scene.add( ambLight )
 	window.addEventListener( 'resize', onWindowResize, false )
 
 }
@@ -311,7 +320,7 @@ function createObjects() {
 	let ground = createParalellepiped( 1024, 1, 64, 0, pos, quat, new THREE.MeshPhongMaterial( { color: 0xFFFFFF } ) )
 	ground.castShadow = true
 	ground.receiveShadow = true
-	textureLoader.load( 'textures/ground/sand.png', ( texture ) => {
+	texture.load( 'textures/ground/sand.png', ( texture ) => {
 
 		texture.wrapS = THREE.RepeatWrapping
 		texture.wrapT = THREE.RepeatWrapping
@@ -372,7 +381,7 @@ function createSoftVolume( bufferGeom, mass, pressure ) {
 	volume.receiveShadow = true
 	volume.frustumCulled = false
 	scene.add( volume )
-	textureLoader.load( 'textures/inflatables/colors.png', function ( texture ) {
+	texture.load( 'textures/inflatables/colors.png', function ( texture ) {
 		volume.material.map = texture
 		volume.material.needsUpdate = true
 	} )
@@ -525,12 +534,13 @@ function processInputs( deltaTime ) {
 	direction.normalize() // this ensures consistent movements in all directions
 	if ( moveFwd  || moveBack  ) velocity.z += direction.z * deltaTime
 	if ( moveLeft || moveRight ) velocity.x += direction.x * deltaTime
-	controls.moveRight  ( velocity.x * speedFactor * deltaTime );
+	controls.moveRight  ( velocity.x * speedFactor * deltaTime )
 	controls.moveForward( velocity.z * speedFactor * deltaTime )
-	controls.getObject().position.y += ( velocity.y * deltaTime )
-	if ( controls.getObject().position.y < 5 ) {
+	viewer = controls.getObject()
+	viewer.position.y += ( velocity.y * deltaTime )
+	if ( viewer.position.y < 5 ) {
 		velocity.y = 0;
-		controls.getObject().position.y = 5;
+		viewer.position.y = 5;
 	}
 }
 function onWindowResize() {
