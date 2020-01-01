@@ -194,7 +194,7 @@ const doc 			  = document,
 			velocity 		= new THREE.Vector3(),
 			direction 	= new THREE.Vector3(),
 			vertex 			= new THREE.Vector3(),
-			speedFactor = 256,
+			speedFactor = 128,
 
 			scene 		  = new THREE.Scene(),
 			renderer 		= new THREE.WebGLRenderer(),
@@ -460,7 +460,9 @@ function initInput() {
 			moveRight = true
 			break
 			case 'Space':
-			velocity.y += 8
+			if ( controls.getObject().position.y <= 5 ) {
+				velocity.y += 8
+			}
 			break
 
 		}
@@ -516,7 +518,7 @@ function processInputs( deltaTime ) {
 
 	velocity.x -= velocity.x * speedFactor * deltaTime
 	velocity.z -= velocity.z * speedFactor * deltaTime
-	velocity.y += gravity * deltaTime // 100.0 = mass
+	velocity.y += gravity * 4 * deltaTime
 	direction.z = Number( moveFwd ) - Number( moveBack )
 	direction.x = Number( moveRight ) - Number( moveLeft )
 	direction.normalize() // this ensures consistent movements in all directions
