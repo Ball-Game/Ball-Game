@@ -461,7 +461,7 @@ function initInput() {
 			break
 			case 'Space':
 			if ( controls.getObject().position.y <= 5 ) {
-				velocity.y += 8
+				velocity.y += 16
 			}
 			break
 
@@ -516,16 +516,16 @@ function processInputs( deltaTime ) {
 	}
 
 
-	velocity.x -= velocity.x * speedFactor * deltaTime
-	velocity.z -= velocity.z * speedFactor * deltaTime
+	velocity.z -= velocity.z * deltaTime * 0.9
+	velocity.x -= velocity.x * deltaTime * 0.9
 	velocity.y += gravity * 4 * deltaTime
-	direction.z = Number( moveFwd ) - Number( moveBack )
+	direction.z = Number( moveFwd   ) - Number( moveBack )
 	direction.x = Number( moveRight ) - Number( moveLeft )
 	direction.normalize() // this ensures consistent movements in all directions
-	if ( moveFwd || moveBack ) velocity.z -= direction.z * speedFactor * deltaTime
-	if ( moveLeft || moveRight ) velocity.x -= direction.x * speedFactor * deltaTime
-	controls.moveRight( - velocity.x * deltaTime );
-	controls.moveForward( - velocity.z * deltaTime )
+	if ( moveFwd  || moveBack  ) velocity.z += direction.z * deltaTime
+	if ( moveLeft || moveRight ) velocity.x += direction.x * deltaTime
+	controls.moveRight  ( velocity.x * speedFactor * deltaTime );
+	controls.moveForward( velocity.z * speedFactor * deltaTime )
 	controls.getObject().position.y += ( velocity.y * deltaTime )
 	if ( controls.getObject().position.y < 5 ) {
 		velocity.y = 0;
