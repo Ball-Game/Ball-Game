@@ -1,67 +1,175 @@
-<html lang='en'>
+start<html lang='en'>
 	<head>
 		<title>Ball Game</title>
 		<meta charset='utf-8'>
 		<meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'>
 		<style>
 
-html,body{
+html , body {
 
 	margin: 0;
-	color: #fff;
-	font-family: monospace,monospace;
+  font-size:16px;
 
 }
 
-nav {
+@font-face {
+	font-family:'emberly';
+	src: url('fonts/emberly.otf') format('opentype');
+}
 
-	position: fixed;
+body {
+
+	color: #fff;
+	font-family: 'emberly';
+  font-variation-settings: 'wdth' 100, 'wght', 900;
+
+}
+
+#canvas{
+	top:0
+}
+
+#loading{
 	width: 100%;
 	height: 100%;
-	z-index: 100;
-
+	top:0;
+	left:0;
 	background-color: #222;
-	background-image: radial-gradient(#333,#111 50%,#222 50%);
-	background-size: 100vmin;
-	background-position: center;
-	background-repeat: no-repeat;
-
-	text-align: center;
-	display: flex;
-	flex-direction: column;
-	justify-content: center;
 
 }
 
-nav>*{
-	margin:1rem 0;
-}
-
-button{
-	background: NONE;
-	border: 0;
-	color: inherit;
-	font-family: inherit;
-	cursor: pointer;
-}
-button:hover{
-	opacity:0.5;
-}
-
-#CANVAS{
+#start,#start-button,#canvas{
 	position:fixed;
 }
+
+#start{
+
+	--size:90vmin;
+
+}
+
+#start,#start-button{
+
+	width:var(--size);
+	height:var(--size);
+	left:calc(50vw - var(--size)/2);
+	top:calc(50vh - var(--size)/2);
+	background-image:radial-gradient(#333,#111);
+	border-radius:50%;
+
+}
+
+#start>svg{
+
+  position:fixed;
+  font:'emberly';
+  font-size:25.5;
+  width:var(--size);
+  height:var(--size);
+  fill:#fff;
+
+}
+
+#title{
+  user-select:none;
+}
+
+#start-button{
+	--size:calc(19.5vmin + 6.5rem);
+}
+
+#start-button{
+
+	display:inline-block;
+
+	font-family:inherit;
+	font-size:calc(9vmin + 3rem);
+	color:inherit;
+	border:0;
+  cursor:pointer;
+
+}
+
+#start-button:focus{
+	background-image:radial-gradient(#444,#080808);
+  outline:none;
+}
+#start-button:hover{
+	background-image:radial-gradient(#555,#000);
+}
+#start-button:active{
+	background-image:radial-gradient(#111,#222);
+}
+
+#start-button:disabled{
+
+	font-size:calc(6vmin + 2rem);
+	animation:rotate 16s linear infinite;
+}
+@keyframes rotate{
+	0%{transform:rotate(-0.1turn)}
+	100%{transform:rotate(0.9turn)}
+}
+
 		</style>
 	</head>
 	<body>
 
-		<nav id='menu'>
-			<div>Ball Game</div>
-			<button id='menu-play'>I would like to throw balls at balls</button>
-			<button id='menu-buy'>Store</button>
-		</nav>
-
 		<main id='canvas'></main>
+
+		<div id='start'>
+      <svg viewbox='0 0 90 90'>
+        <defs>
+          <path id='top-path'
+                d='M45 70
+                   a25 25 0 0 1 0 -50
+                   a25 25 0 0 1 0 50'/>
+          <path id='bottom-path'
+                d='M45 2
+                   a43 43 0 0 0 0 86
+                   a43 43 0 0 0 0 -86'/>
+        </defs>
+        <mask id='top-mask'>
+          <path d='M0 45
+                   a45 45 0 0 1 90 0' fill='#fff'/>
+        </mask>
+        <mask id='bottom-mask'>
+          <path d='M0 45
+                   a45 45 0 0 0 90 0' fill='#fff'/>
+        </mask>
+        <text id='title'>
+          <textPath href='#top-path'
+                    textLength='166'
+                    mask='url(#top-mask)'>
+            <animate attributeName='startOffset'
+                       values='-41.5;41.5'
+                       dur='5s'
+                       repeatCount='indefinite'/>
+              BALL GAME BALL GAME
+          </textPath>
+          <textPath href='#bottom-path'
+                    textLength='257'
+                    mask='url(#bottom-mask)'>
+            <animate attributeName='startOffset'
+                       values='-68;68'
+                       dur='5s'
+                       repeatCount='indefinite'/>
+              BALL GAME BALL GAME
+          </textPath>
+        </text>
+            <!--
+            <text id='desc'>
+                <textPath>
+A Game Where You Throw Small Balls at your Big Ball to Get Your Big Ball to the Other Side
+                </textPath>
+                <textPath>
+By DevCord &amp; Three.js Example Making People                    </textPath>
+            </text>
+            -->
+      </svg>
+			<button id='start-button' disabled>Loading...</button>
+		</div>
+
 
 		<script src='js/ammo.js'></script>
 
@@ -69,31 +177,34 @@ button:hover{
 		<script type='module'>
 
 import * as THREE from './js/three.module.js'
-import { OrbitControls } from './js/OrbitControls.js'
+import { PointerLockControls } from './js/PointerLockControls.js'
 import { BufferGeometryUtils } from './js/BufferGeometryUtils.js'
 
 // menu screen
+const doc 			   = document,
 
-const MENU = document.getElementById('menu'),
-			MENU_PLAY = document.getElementById('menu-play'),
-			MENU_BUY = document.getElementById('menu-buy'),
+			start        = doc.getElementById('start'),
+			startButton  = doc.getElementById('start-button'),
+			loading 	   = doc.getElementById('loading'),
 
-			CANVAS = document.getElementById('canvas')
+			canvas 		   = doc.getElementById('canvas'),
 
-
+			scene 		  = new THREE.Scene(),
+			renderer 		= new THREE.WebGLRenderer(),
+			camera 			= new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 ),
+			controls		= new PointerLockControls( camera, renderer.domElement )
 
 // Graphics variables
-let camera, controls, scene, renderer
 let textureLoader
 let clock = new THREE.Clock()
 let clickRequest = false
-let mouseCoords = new THREE.Vector2()
+const canvasCenter = new THREE.Vector2(0,0)
 let raycaster = new THREE.Raycaster()
 let ballMaterial = new THREE.MeshPhongMaterial( { color: 0x202020 } )
 let pos = new THREE.Vector3()
 let quat = new THREE.Quaternion()
 // Physics variables
-const GRAVITY = - 9.8
+const gravity = - 9.8
 let physicsWorld
 let rigidBodies = []
 let softBodies = []
@@ -101,46 +212,54 @@ let margin = 0.05
 let transformAux1
 let softBodyHelpers
 
+let ambientLight
+
+const setSkyColor = ( colorStr ) => {
+
+	const color = new THREE.Color( colorStr )
+
+	scene.background = color
+
+}
+
+initGraphics()
+
+startButton.addEventListener('click',()=>{
+  start.style.visibility='hidden'
+	controls.lock()
+})
+
 Ammo().then( ( AmmoLib ) => {
 
 	Ammo = AmmoLib
 
-	initGraphics()
 	initPhysics()
 	createObjects()
+	initInput()
+	animate()
 
-	MENU_PLAY.addEventListener('click',()=>{
-
-		MENU.style.visibility = 'hidden'
-
-		initInput()
-		animate()
-
-	})
+	startButton.innerText = 'Start';
+	startButton.disabled  = false;
 
 } )
 
+
 function initGraphics() {
 
-	camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.2, 2000 )
-	scene = new THREE.Scene()
-	scene.background = new THREE.Color( 0xbfd1e5 )
-	camera.position.set( - 7, 5, 8 )
-	renderer = new THREE.WebGLRenderer()
+	setSkyColor('hsl(200,100%,80%)')
+	camera.position.set( -10, 5, 0 )
+
 	renderer.setPixelRatio( window.devicePixelRatio )
 	renderer.setSize( window.innerWidth, window.innerHeight )
 	renderer.shadowMap.enabled = true
-	CANVAS.appendChild( renderer.domElement )
-	controls = new OrbitControls( camera, renderer.domElement )
-	controls.target.set( 0, 2, 0 )
-	controls.update()
+	canvas.appendChild( renderer.domElement )
 	textureLoader = new THREE.TextureLoader()
-	let ambientLight = new THREE.AmbientLight( 0x404040 )
+	let ambientLight = new THREE.AmbientLight('hsl(200,10%,40%)')
 	scene.add( ambientLight )
 	let light = new THREE.DirectionalLight( 0xffffff, 1 )
 	light.position.set( - 10, 10, 5 )
 	light.castShadow = true
-	let d = 20
+	let d = 10
 	light.shadow.camera.left = - d
 	light.shadow.camera.right = d
 	light.shadow.camera.top = d
@@ -162,23 +281,24 @@ function initPhysics() {
 	let solver = new Ammo.btSequentialImpulseConstraintSolver()
 	let softBodySolver = new Ammo.btDefaultSoftBodySolver()
 	physicsWorld = new Ammo.btSoftRigidDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration, softBodySolver )
-	physicsWorld.setGravity( new Ammo.btVector3( 0, GRAVITY, 0 ) )
-	physicsWorld.getWorldInfo().set_m_gravity( new Ammo.btVector3( 0, GRAVITY, 0 ) )
+	physicsWorld.setGravity( new Ammo.btVector3( 0, gravity, 0 ) )
+	physicsWorld.getWorldInfo().set_m_gravity( new Ammo.btVector3( 0, gravity, 0 ) )
 	transformAux1 = new Ammo.btTransform()
 	softBodyHelpers = new Ammo.btSoftBodyHelpers()
 
 }
 function createObjects() {
 	// Ground
-	pos.set( 0, - 0.5, 0 )
+	pos.set( 400, - 0.5, 0 )
 	quat.set( 0, 0, 0, 1 )
-	let ground = createParalellepiped( 40, 1, 40, 0, pos, quat, new THREE.MeshPhongMaterial( { color: 0xFFFFFF } ) )
+	let ground = createParalellepiped( 1024, 1, 64, 0, pos, quat, new THREE.MeshPhongMaterial( { color: 0xFFFFFF } ) )
 	ground.castShadow = true
 	ground.receiveShadow = true
-	textureLoader.load( 'textures/ground/sand.png', function ( texture ) {
+	textureLoader.load( 'textures/ground/sand.png', ( texture ) => {
+
 		texture.wrapS = THREE.RepeatWrapping
 		texture.wrapT = THREE.RepeatWrapping
-		texture.repeat.set( 40, 40 )
+		texture.repeat.set( 32, 2 )
 		ground.material.map = texture
 		ground.material.needsUpdate = true
 
@@ -188,15 +308,6 @@ function createObjects() {
 	let sphereGeometry = new THREE.SphereBufferGeometry( 1.5, 40, 25 )
 	sphereGeometry.translate( 5, 5, 0 )
 	createSoftVolume( sphereGeometry, volumeMass, 250 )
-	let boxGeometry = new THREE.BoxBufferGeometry( 1, 1, 5, 4, 4, 20 )
-	boxGeometry.translate( - 2, 5, 0 )
-	createSoftVolume( boxGeometry, volumeMass, 120 )
-	// Ramp
-	pos.set( 3, 1, 0 )
-	quat.setFromAxisAngle( new THREE.Vector3( 0, 0, 1 ), 30 * Math.PI / 180 )
-	let obstacle = createParalellepiped( 10, 1, 4, 0, pos, quat, new THREE.MeshPhongMaterial( { color: 0x606060 } ) )
-	obstacle.castShadow = true
-	obstacle.receiveShadow = true
 }
 function processGeometry( bufGeometry ) {
 	// Ony consider the position values when merging the vertices
@@ -211,8 +322,8 @@ function processGeometry( bufGeometry ) {
 function isEqual( x1, y1, z1, x2, y2, z2 ) {
 	let delta = 0.000001
 	return Math.abs( x2 - x1 ) < delta &&
-			Math.abs( y2 - y1 ) < delta &&
-			Math.abs( z2 - z1 ) < delta
+				 Math.abs( y2 - y1 ) < delta &&
+				 Math.abs( z2 - z1 ) < delta
 }
 function mapIndices( bufGeometry, indexedBufferGeom ) {
 	// Creates ammoVertices, ammoIndices and ammoIndexAssociation in bufGeometry
@@ -307,19 +418,13 @@ function createRigidBody( threeObject, physicsShape, mass, pos, quat ) {
 	return body
 }
 function initInput() {
-	window.addEventListener( 'mousedown', function ( event ) {
-		if ( ! clickRequest ) {
-			mouseCoords.set(
-				( event.clientX / window.innerWidth ) * 2 - 1,
-				- ( event.clientY / window.innerHeight ) * 2 + 1
-			)
-			clickRequest = true
-		}
+	canvas.addEventListener( 'click', () => {
+		clickRequest = true
 	}, false )
 }
 function processClick() {
 	if ( clickRequest ) {
-		raycaster.setFromCamera( mouseCoords, camera )
+		raycaster.setFromCamera( canvasCenter, camera )
 		// Creates a ball
 		let ballMass = 3
 		let ballRadius = 0.4
@@ -341,7 +446,7 @@ function processClick() {
 }
 function onWindowResize() {
 	camera.aspect = window.innerWidth / window.innerHeight
-	camera.updateProjectionMatrix()
+	controls.updateProjectionMatrix()
 	renderer.setSize( window.innerWidth, window.innerHeight )
 }
 function animate() {
