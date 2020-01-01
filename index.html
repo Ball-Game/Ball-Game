@@ -516,7 +516,7 @@ function processInputs( deltaTime ) {
 
 	velocity.x -= velocity.x * speedFactor * deltaTime
 	velocity.z -= velocity.z * speedFactor * deltaTime
-	velocity.y += gravity * speedFactor * deltaTime // 100.0 = mass
+	velocity.y += gravity * deltaTime // 100.0 = mass
 	direction.z = Number( moveFwd ) - Number( moveBack )
 	direction.x = Number( moveRight ) - Number( moveLeft )
 	direction.normalize() // this ensures consistent movements in all directions
