@@ -195,6 +195,7 @@ const doc 			  = document,
 			direction 	= new THREE.Vector3(),
 			vertex 			= new THREE.Vector3(),
 			speedFactor = 128,
+      glideFactor = 0.98,
 
 			scene 		  = new THREE.Scene(),
 			renderer 		= new THREE.WebGLRenderer(),
@@ -516,8 +517,8 @@ function processInputs( deltaTime ) {
 	}
 
 
-	velocity.z -= velocity.z * deltaTime * 0.9
-	velocity.x -= velocity.x * deltaTime * 0.9
+	velocity.z -= velocity.z * deltaTime * glideFactor
+	velocity.x -= velocity.x * deltaTime * glideFactor
 	velocity.y += gravity * 4 * deltaTime
 	direction.z = Number( moveFwd   ) - Number( moveBack )
 	direction.x = Number( moveRight ) - Number( moveLeft )
